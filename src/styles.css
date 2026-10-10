@@ -9,6 +9,7 @@
   --accent-text: #ffffff;
   --beat-normal: #9a9ca5;
   --focus: #2f6fed;
+  --boost: #c8352b;
   --radius: 14px;
   color-scheme: light dark;
 }
@@ -25,6 +26,7 @@
     --accent-text: #14171f;
     --beat-normal: #6c7282;
     --focus: #7aa5ff;
+    --boost: #ff5a4f;
   }
 }
 
@@ -501,4 +503,9 @@ input[type='number'] {
 
 a {
   color: var(--accent);
+}
+
+/* Volume above 100% (boost) is tinted as a gentle warning. */
+input[type='range'].is-boost {
+  accent-color: var(--boost);
 }

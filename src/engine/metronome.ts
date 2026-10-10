@@ -1,11 +1,30 @@
 import { Emitter } from '../core/emitter';
 import type { MetronomeSettings } from '../core/types';
+import { softLimit, volumeToGain } from '../core/volume';
 import { Scheduler, type ScheduledTick } from './scheduler';
 import { getSound, renderVoice, type VoiceKind } from './sounds';
 import TimerWorker from './timer.worker?worker';
 
 const PUMP_INTERVAL_MS = 25;
 const VOICES: VoiceKind[] = ['accent', 'beat', 'sub'];
+
+/**
+ * A WaveShaper only shapes inputs in -1..1, so boosted signals are scaled down by
+ * this factor before it and the curve scales them back up. Must exceed the maximum gain.
+ */
+const LIMITER_HEADROOM = 4;
+
+/** Soft limiter stage: rounds off boosted peaks instead of letting them clip. */
+function createLimiter(ctx: AudioContext): WaveShaperNode {
+  const points = 8192;
+  const curve = new Float32Array(points);
+  for (let i = 0; i < points; i++) {
+    const u = (i / (points - 1)) * 2 - 1;
+    curve[i] = softLimit(u * LIMITER_HEADROOM);
+  }
+  // Oversampling keeps the limiting from adding harsh aliasing.
+  return new WaveShaperNode(ctx, { curve, oversample: '4x' });
+}
 
 type MetronomeEvents = {
   /** Fired when a tick is actually heard (aligned with audio output), for visuals. */
@@ -63,8 +82,8 @@ export class Metronome extends Emitter<MetronomeEvents> {
 
   setVolume(volume: number): void {
     if (!this.ctx || !this.master) return;
-    // Squared for a more natural-feeling slider.
-    this.master.gain.setTargetAtTime(volume * volume, this.ctx.currentTime, 0.01);
+    // The limiter's input is scaled down by LIMITER_HEADROOM (see ensureContext).
+    this.master.gain.setTargetAtTime(volumeToGain(volume) / LIMITER_HEADROOM, this.ctx.currentTime, 0.01);
   }
 
   setSound(id: string): void {
@@ -83,7 +102,7 @@ export class Metronome extends Emitter<MetronomeEvents> {
     if (!this.ctx) {
       this.ctx = new AudioContext({ latencyHint: 'interactive' });
       this.master = this.ctx.createGain();
-      this.master.connect(this.ctx.destination);
+      this.master.connect(createLimiter(this.ctx)).connect(this.ctx.destination);
     }
     return this.ctx;
   }

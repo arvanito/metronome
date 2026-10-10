@@ -1,6 +1,7 @@
 import { MAX_BEATS, resizeAccents } from './rhythm';
 import { MAX_BPM, MIN_BPM } from './tempo';
 import type { Accent, BeatUnit, MetronomeSettings, Subdivision, TrainerSettings } from './types';
+import { MAX_VOLUME } from './volume';
 
 export const DEFAULT_SETTINGS: MetronomeSettings = {
   bpm: 100,
@@ -9,7 +10,7 @@ export const DEFAULT_SETTINGS: MetronomeSettings = {
   accents: ['strong', 'normal', 'normal', 'normal'],
   subdivision: 1,
   sound: 'woodblock',
-  volume: 0.8,
+  volume: 1,
 };
 
 export const DEFAULT_TRAINER: TrainerSettings = {
@@ -52,7 +53,7 @@ export function sanitizeSettings(input: unknown): MetronomeSettings {
     accents: resizeAccents(accents, beatsPerBar),
     subdivision: oneOf(raw.subdivision, SUBDIVISIONS, d.subdivision),
     sound: typeof raw.sound === 'string' ? raw.sound : d.sound,
-    volume: num(raw.volume, 0, 1, d.volume, false),
+    volume: num(raw.volume, 0, MAX_VOLUME, d.volume, false),
   };
 }
 

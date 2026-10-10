@@ -16,7 +16,7 @@ export function h<K extends keyof HTMLElementTagNameMap>(
       el.addEventListener(key.slice(2), value as EventListener);
     } else if (key === 'class') {
       el.className = String(value);
-    } else if (key in el) {
+    } else if (key in el && isWritable(el, key)) {
       (el as unknown as Record<string, unknown>)[key] = value;
     } else {
       el.setAttribute(key, value === true ? '' : String(value));
@@ -24,6 +24,15 @@ export function h<K extends keyof HTMLElementTagNameMap>(
   }
   for (const child of children) if (child) el.append(child);
   return el;
+}
+
+/** Some DOM properties (e.g. input.list) are read-only and only settable as attributes. */
+function isWritable(el: object, key: string): boolean {
+  for (let proto: object | null = el; proto; proto = Object.getPrototypeOf(proto)) {
+    const desc = Object.getOwnPropertyDescriptor(proto, key);
+    if (desc) return desc.writable === true || desc.set !== undefined;
+  }
+  return false;
 }
 
 /** Labelled form row. */
