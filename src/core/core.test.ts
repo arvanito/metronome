@@ -100,9 +100,9 @@ describe('volume', () => {
     expect(volumeToGain(0.5)).toBe(0.25);
     expect(volumeToGain(1)).toBe(1);
     expect(volumeToGain(1.0001)).toBeCloseTo(1, 3);
+    expect(20 * Math.log10(volumeToGain(1.25))).toBeCloseTo(2.5);
     expect(20 * Math.log10(volumeToGain(1.5))).toBeCloseTo(5);
-    expect(20 * Math.log10(volumeToGain(2))).toBeCloseTo(10);
-    expect(volumeToGain(5)).toBe(volumeToGain(2));
+    expect(volumeToGain(5)).toBe(volumeToGain(1.5));
   });
 
   it('limits softly without ever exceeding full scale', () => {
@@ -122,7 +122,7 @@ describe('settings', () => {
     expect(sanitizeSettings(null)).toEqual(DEFAULT_SETTINGS);
     expect(sanitizeSettings({ bpm: 'fast', subdivision: 7, volume: 3 })).toEqual({
       ...DEFAULT_SETTINGS,
-      volume: 2,
+      volume: 1.5,
     });
   });
 

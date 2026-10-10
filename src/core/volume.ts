@@ -1,7 +1,7 @@
 /** Slider range: 0..1 is normal volume, 1..MAX_VOLUME is boost. */
-export const MAX_VOLUME = 2;
+export const MAX_VOLUME = 1.5;
 /** Boost at the top of the slider, in dB. */
-export const MAX_BOOST_DB = 10;
+export const MAX_BOOST_DB = 5;
 
 /**
  * Maps the volume slider (0..MAX_VOLUME) to a linear gain.

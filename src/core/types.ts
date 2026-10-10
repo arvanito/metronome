@@ -19,7 +19,7 @@ export interface MetronomeSettings {
   subdivision: Subdivision;
   /** Id of a sound in engine/sounds.ts. */
   sound: string;
-  /** 0..2: 1 is full clean level, above 1 is boost (see core/volume.ts). */
+  /** 0..1.5: 1 is full clean level, above 1 is boost (see core/volume.ts). */
   volume: number;
 }
 
