@@ -130,17 +130,15 @@ export const SOUNDS: SoundDef[] = [
   {
     id: 'mechanical',
     label: 'Mechanical',
-    description: 'Classic wind-up metronome: soft "tock" with a bell on the downbeat.',
+    description: 'Classic wind-up metronome "tock"; the downbeat is a stronger, higher tock.',
     render(kind, sr) {
+      // [tick band, body resonance, low resonance]: the accent is pitched up a little.
+      const [tickFreq, body, low] = { accent: [2000, 1480, 440], beat: [1700, 1250, 380], sub: [1400, 1100, 340] }[kind];
       const tock = mix(
-        [tick(sr, 0.08, kind === 'sub' ? 1400 : 1700, 3, 0.004), 0.6],
-        [synth(sr, 0.08, (t) => fadeIn(t, 0.0008) * (mode(t, 1250, 0.01) + mode(t, 380, 0.018, 0.6))), 1],
+        [tick(sr, 0.08, tickFreq, 3, 0.004), 0.6],
+        [synth(sr, 0.08, (t) => fadeIn(t, 0.0008) * (mode(t, body, 0.01) + mode(t, low, 0.018, 0.6))), 1],
       );
-      if (kind !== 'accent') return lowpass(tock, sr, 5000);
-      const bell = synth(sr, 0.9, (t) =>
-        fadeIn(t, 0.002) * modes(t, 988, [[1, 1, 0.25], [2, 0.4, 0.15], [3.01, 0.2, 0.08], [4.2, 0.08, 0.05]]),
-      );
-      return lowpass(mix([tock, 0.7], [bell, 0.8]), sr, 5000);
+      return lowpass(tock, sr, 5000);
     },
   },
   {
