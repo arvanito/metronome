@@ -208,6 +208,36 @@ export const SOUNDS: SoundDef[] = [
     },
   },
   {
+    id: 'bassdrum',
+    label: 'Bass drum',
+    description: 'Deep, round kick drum with a felt beater on every beat.',
+    render(kind, sr) {
+      const [from, to, decay] = { accent: [95, 45, 0.28], beat: [110, 52, 0.2], sub: [125, 62, 0.09] }[kind];
+      const head = synth(sr, decay * 4, (t) => {
+        const env = fadeIn(t, 0.0015) * Math.exp(-t / decay);
+        // Second harmonic so the drum is still heard on speakers that can't play 50 Hz.
+        return env * (glide(t, from, to, 0.035) + 0.25 * Math.exp(-t / 0.06) * glide(t, 2 * from, 2 * to, 0.035));
+      });
+      const beater = lowpass(tick(sr, 0.03, 700, 0.8, 0.005), sr, 2000);
+      return lowpass(mix([head, 1], [beater, kind === 'sub' ? 0.15 : 0.3]), sr, 2500);
+    },
+  },
+  {
+    id: 'deeptom',
+    label: 'Deep tom',
+    description: 'Low floor tom: bass-heavy like a drum, but with a clearer pitch.',
+    render(kind, sr) {
+      const [from, to, decay] = { accent: [150, 98, 0.3], beat: [130, 87, 0.22], sub: [115, 82, 0.1] }[kind];
+      const head = synth(sr, decay * 4, (t) => {
+        const env = fadeIn(t, 0.0015) * Math.exp(-t / decay);
+        // Drum-head overtone (ratio ~1.59) decays faster than the fundamental.
+        return env * (glide(t, from, to, 0.05) + 0.3 * Math.exp(-t / 0.05) * glide(t, 1.59 * from, 1.59 * to, 0.05));
+      });
+      const stick = lowpass(tick(sr, 0.03, 1200, 1, 0.004), sr, 3000);
+      return lowpass(mix([head, 1], [stick, 0.2]), sr, 3000);
+    },
+  },
+  {
     id: 'softclick',
     label: 'Soft click',
     description: 'A classic click with the sharp edge taken off.',
@@ -240,13 +270,28 @@ export function getSound(id: string): SoundDef {
 }
 
 const FADE_OUT = 0.01;
+/** Window over which loudness is measured: roughly how long a click is perceived. */
+const LOUDNESS_WINDOW = 0.05;
+/** Target RMS over that window, for an accent. */
+const TARGET_RMS = 0.3;
 
-/** Renders one click, scales its peak to the kind's level and fades out the tail. */
+/**
+ * Renders one click and levels it. Sounds are matched by loudness (short-term RMS),
+ * so sustained tones and bass sounds don't come out much louder than clicks and
+ * overdrive small speakers; the peak never exceeds the kind's level.
+ * Also fades out the tail.
+ */
 export function renderVoice(sound: SoundDef, kind: VoiceKind, sampleRate: number): Float32Array {
   const samples = sound.render(kind, sampleRate);
   let peak = 0;
-  for (const v of samples) peak = Math.max(peak, Math.abs(v));
-  const gain = peak > 0 ? LEVELS[kind] / peak : 0;
+  let energy = 0;
+  const window = Math.min(samples.length, Math.round(LOUDNESS_WINDOW * sampleRate));
+  for (let i = 0; i < samples.length; i++) {
+    peak = Math.max(peak, Math.abs(samples[i]));
+    if (i < window) energy += samples[i] ** 2;
+  }
+  const rms = Math.sqrt(energy / window);
+  const gain = peak > 0 ? LEVELS[kind] * Math.min(1 / peak, TARGET_RMS / rms) : 0;
   const fadeStart = samples.length - Math.round(FADE_OUT * sampleRate);
   for (let i = 0; i < samples.length; i++) {
     const fade = i < fadeStart ? 1 : 0.5 + 0.5 * Math.cos((Math.PI * (i - fadeStart)) / (samples.length - fadeStart));

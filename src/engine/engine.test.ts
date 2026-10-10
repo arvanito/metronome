@@ -82,12 +82,19 @@ describe('scheduler', () => {
 });
 
 describe('sounds', () => {
-  it.each(SOUNDS.map((s) => [s.id, s] as const))('%s renders normalised voices', (_, sound) => {
+  it.each(SOUNDS.map((s) => [s.id, s] as const))('%s renders levelled voices', (_, sound) => {
     for (const kind of ['accent', 'beat', 'sub'] as const) {
       const samples = renderVoice(sound, kind, 48000);
       expect(samples.length).toBeGreaterThan(100);
       const peak = samples.reduce((m, v) => Math.max(m, Math.abs(v)), 0);
-      expect(peak).toBeCloseTo(LEVELS[kind], 5);
+      // Never above the kind's level (no clipping), and not drastically quieter.
+      expect(peak).toBeLessThanOrEqual(LEVELS[kind] + 1e-6);
+      expect(peak).toBeGreaterThan(LEVELS[kind] * 0.3);
+      // Short-term loudness never exceeds the target.
+      const n = Math.min(samples.length, 2400);
+      let e = 0;
+      for (let i = 0; i < n; i++) e += samples[i] ** 2;
+      expect(Math.sqrt(e / n)).toBeLessThanOrEqual(0.3 * LEVELS[kind] + 1e-6);
       // Clicks must die away so consecutive ticks don't smear together.
       expect(Math.abs(samples[samples.length - 1])).toBeLessThan(0.05);
     }
