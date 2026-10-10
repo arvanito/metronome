@@ -94,7 +94,7 @@ describe('sounds', () => {
       const n = Math.min(samples.length, 2400);
       let e = 0;
       for (let i = 0; i < n; i++) e += samples[i] ** 2;
-      expect(Math.sqrt(e / n)).toBeLessThanOrEqual(0.3 * LEVELS[kind] + 1e-6);
+      expect(Math.sqrt(e / n)).toBeLessThanOrEqual(0.45 * LEVELS[kind] + 1e-6);
       // Clicks must die away so consecutive ticks don't smear together.
       expect(Math.abs(samples[samples.length - 1])).toBeLessThan(0.05);
     }

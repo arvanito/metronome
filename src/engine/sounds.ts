@@ -238,7 +238,7 @@ const FADE_OUT = 0.01;
 /** Window over which loudness is measured: roughly how long a click is perceived. */
 const LOUDNESS_WINDOW = 0.05;
 /** Target RMS over that window, for an accent. */
-const TARGET_RMS = 0.3;
+const TARGET_RMS = 0.45;
 
 /**
  * Renders one click and levels it. Sounds are matched by loudness (short-term RMS),
