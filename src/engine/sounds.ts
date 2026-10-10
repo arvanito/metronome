@@ -199,10 +199,9 @@ export const SOUNDS: SoundDef[] = [
   {
     id: 'drums',
     label: 'Drums',
-    description: 'Kick on the downbeat, low tom on beats, soft shaker on subdivisions.',
+    description: 'Kick on the downbeat, low tom on beats, short tom ghost notes on subdivisions.',
     render(kind, sr) {
-      if (kind === 'sub') return lowpass(tick(sr, 0.08, 3500, 0.7, 0.018), sr, 7000);
-      const [from, to, decay] = kind === 'accent' ? [140, 50, 0.2] : [210, 120, 0.12];
+      const [from, to, decay] = { accent: [140, 50, 0.2], beat: [210, 120, 0.12], sub: [250, 150, 0.05] }[kind];
       const head = synth(sr, decay * 4, (t) => fadeIn(t, 0.001) * Math.exp(-t / decay) * glide(t, from, to, 0.03));
       return lowpass(mix([head, 1], [tick(sr, 0.02, 2000, 1, 0.002), 0.15]), sr, 4000);
     },
