@@ -1,29 +1,39 @@
+import type { Engine } from './engine/engine';
 import { Metronome } from './engine/metronome';
+import { NativeEngine, juceBackend } from './engine/nativeEngine';
 import type { AppContext, Feature } from './features/feature';
-import { createStore, type AppStore } from './state';
+import { createStore, patchSettings, type AppStore } from './state';
 import { h } from './ui/dom';
 
-/** Keeps the audio engine in sync with the store. */
-function connectEngine(store: AppStore, metronome: Metronome): void {
+/** The native (JUCE) engine when running inside the desktop/Android app, Web Audio otherwise. */
+function createEngine(): Engine {
+  const backend = juceBackend();
+  return backend ? new NativeEngine(backend) : new Metronome();
+}
+
+/** Keeps the audio engine in sync with the store, and the store with tempo changes from the engine. */
+function connectEngine(store: AppStore, engine: Engine): void {
+  engine.update(store.get().settings, store.get().trainer);
   store.subscribe((s, prev) => {
+    if (s.settings !== prev.settings || s.trainer !== prev.trainer) engine.update(s.settings, s.trainer);
     if (s.playing !== prev.playing) {
       if (s.playing) {
-        metronome.start().catch((err) => {
+        engine.start().catch((err) => {
           console.error('Could not start audio', err);
           store.set({ playing: false });
         });
       } else {
-        metronome.stop();
+        engine.stop();
       }
     }
-    if (s.settings.volume !== prev.settings.volume) metronome.setVolume(s.settings.volume);
-    if (s.settings.sound !== prev.settings.sound) metronome.setSound(s.settings.sound);
   });
+  // The speed trainer runs inside the engine, so tempo steps land exactly on the bar line.
+  engine.on('tempo', (bpm) => patchSettings(store, { bpm }));
 }
 
 export function createApp(root: HTMLElement, features: Feature[]): AppContext {
   const store = createStore();
-  const metronome = new Metronome(() => store.get().settings);
+  const metronome = createEngine();
   connectEngine(store, metronome);
 
   const ctx: AppContext = { store, metronome };

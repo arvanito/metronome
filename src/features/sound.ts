@@ -7,7 +7,7 @@ import type { Feature } from './feature';
 /** Sound pack picker and volume. */
 export const sound: Feature = {
   id: 'sound',
-  mount(root, { store }) {
+  mount(root, { store, metronome }) {
     const select = h(
       'select',
       { onchange: () => patchSettings(store, { sound: select.value }) },
@@ -28,7 +28,14 @@ export const sound: Feature = {
     root.append(
       field('Sound', select),
       h('label', { class: 'field' }, volumeLabel, volume, marks),
-      h('p', { class: 'sound-link' }, h('a', { href: './audition.html' }, 'Compare all sounds →')),
+      h(
+        'p',
+        { class: 'sound-link' },
+        h('a', { href: './audition.html' }, 'Compare all sounds →'),
+        // Only the native app can choose the output device (e.g. an ASIO interface).
+        metronome.openAudioSettings &&
+          h('button', { type: 'button', class: 'link-btn', onclick: metronome.openAudioSettings }, 'Audio settings…'),
+      ),
     );
 
     const render = () => {

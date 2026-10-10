@@ -509,3 +509,19 @@ a {
 input[type='range'].is-boost {
   accent-color: var(--boost);
 }
+
+.sound-link {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.link-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-size: 14px;
+  text-decoration: underline;
+  cursor: pointer;
+}

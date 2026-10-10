@@ -1,11 +1,10 @@
-import { shouldStep, trainerStep } from '../core/speedTrainer';
 import { MAX_BPM, MIN_BPM } from '../core/tempo';
 import type { TrainerSettings } from '../core/types';
-import { patchSettings, patchTrainer } from '../state';
+import { patchTrainer } from '../state';
 import { field, h } from '../ui/dom';
 import type { Feature } from './feature';
 
-/** Gradually changes the tempo: ±N BPM every M bars until a target tempo. */
+/** Settings and countdown for the speed trainer (±N BPM every M bars until a target tempo). */
 export const speedTrainer: Feature = {
   id: 'trainer',
   mount(root, { store, metronome }) {
@@ -70,12 +69,7 @@ export const speedTrainer: Feature = {
       if (s.trainer !== prev.trainer || s.playing !== prev.playing) setStatus(0);
     });
 
-    metronome.on('bar', (barsCompleted) => {
-      const { trainer, settings } = store.get();
-      if (trainer.enabled && shouldStep(barsCompleted, trainer.everyBars)) {
-        patchSettings(store, { bpm: trainerStep(settings.bpm, trainer) });
-      }
-      setStatus(barsCompleted);
-    });
+    // The engine itself steps the tempo at the bar line; this panel only shows the countdown.
+    metronome.on('bar', setStatus);
   },
 };

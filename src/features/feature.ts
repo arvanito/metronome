@@ -1,10 +1,11 @@
-import type { Metronome } from '../engine/metronome';
+import type { Engine } from '../engine/engine';
 import type { AppStore } from '../state';
 
 /** Everything a feature may use. Features never talk to each other directly. */
 export interface AppContext {
   store: AppStore;
-  metronome: Metronome;
+  /** The audio engine (Web Audio, or the native app's engine). */
+  metronome: Engine;
 }
 
 /**

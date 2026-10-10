@@ -1,6 +1,9 @@
 import { Emitter } from '../core/emitter';
-import type { MetronomeSettings } from '../core/types';
+import { DEFAULT_SETTINGS, DEFAULT_TRAINER } from '../core/settings';
+import { shouldStep, trainerStep } from '../core/speedTrainer';
+import type { MetronomeSettings, TrainerSettings } from '../core/types';
 import { softLimit, volumeToGain } from '../core/volume';
+import type { Engine, EngineEvents } from './engine';
 import { Scheduler, type ScheduledTick } from './scheduler';
 import { getSound, renderVoice, type VoiceKind } from './sounds';
 import TimerWorker from './timer.worker?worker';
@@ -26,15 +29,10 @@ function createLimiter(ctx: AudioContext): WaveShaperNode {
   return new WaveShaperNode(ctx, { curve, oversample: '4x' });
 }
 
-type MetronomeEvents = {
-  /** Fired when a tick is actually heard (aligned with audio output), for visuals. */
-  beat: ScheduledTick;
-  /** Fired when a new bar is scheduled; the payload is the number of bars completed. */
-  bar: number;
-};
-
-/** Glues the scheduler to Web Audio. Reads settings live through `getSettings`. */
-export class Metronome extends Emitter<MetronomeEvents> {
+/** Glues the scheduler to Web Audio. Settings arrive through `update`. */
+export class Metronome extends Emitter<EngineEvents> implements Engine {
+  private settings: MetronomeSettings = DEFAULT_SETTINGS;
+  private trainer: TrainerSettings = DEFAULT_TRAINER;
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private buffers = new Map<VoiceKind, AudioBuffer>();
@@ -45,13 +43,33 @@ export class Metronome extends Emitter<MetronomeEvents> {
   private fallbackTimer: ReturnType<typeof setInterval> | undefined;
   private readonly scheduler: Scheduler;
 
-  constructor(private readonly getSettings: () => MetronomeSettings) {
+  constructor() {
     super();
     this.scheduler = new Scheduler({
-      getPattern: this.getSettings,
+      getPattern: () => this.settings,
       onTick: (tick) => this.schedule(tick),
-      onBarStart: (bar) => this.emit('bar', bar),
+      onBarStart: (bar) => this.onBarStart(bar),
     });
+  }
+
+  update(settings: MetronomeSettings, trainer: TrainerSettings): void {
+    const prev = this.settings;
+    this.settings = settings;
+    this.trainer = trainer;
+    if (settings.volume !== prev.volume) this.setVolume(settings.volume);
+    if (settings.sound !== prev.sound) this.setSound(settings.sound);
+  }
+
+  /** Runs at schedule time, so a trainer tempo step applies exactly from the new bar. */
+  private onBarStart(bar: number): void {
+    if (this.trainer.enabled && shouldStep(bar, this.trainer.everyBars)) {
+      const bpm = trainerStep(this.settings.bpm, this.trainer);
+      if (bpm !== this.settings.bpm) {
+        this.settings = { ...this.settings, bpm };
+        this.emit('tempo', bpm);
+      }
+    }
+    this.emit('bar', bar);
   }
 
   get playing(): boolean {
@@ -63,7 +81,7 @@ export class Metronome extends Emitter<MetronomeEvents> {
     if (this.playing) return;
     const ctx = this.ensureContext();
     if (ctx.state !== 'running') await ctx.resume();
-    const { sound, volume } = this.getSettings();
+    const { sound, volume } = this.settings;
     if (this.buffers.size === 0) this.setSound(sound);
     this.setVolume(volume);
     this.scheduler.start(ctx.currentTime);
@@ -80,13 +98,13 @@ export class Metronome extends Emitter<MetronomeEvents> {
     this.sources.clear();
   }
 
-  setVolume(volume: number): void {
+  private setVolume(volume: number): void {
     if (!this.ctx || !this.master) return;
     // The limiter's input is scaled down by LIMITER_HEADROOM (see ensureContext).
     this.master.gain.setTargetAtTime(volumeToGain(volume) / LIMITER_HEADROOM, this.ctx.currentTime, 0.01);
   }
 
-  setSound(id: string): void {
+  private setSound(id: string): void {
     const ctx = this.ctx;
     if (!ctx) return; // Rendered on start, once an AudioContext exists.
     const sound = getSound(id);
