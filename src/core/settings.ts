@@ -8,7 +8,7 @@ export const DEFAULT_SETTINGS: MetronomeSettings = {
   beatUnit: 4,
   accents: ['strong', 'normal', 'normal', 'normal'],
   subdivision: 1,
-  sound: 'click',
+  sound: 'woodblock',
   volume: 0.8,
 };
 

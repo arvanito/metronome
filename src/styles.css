@@ -426,3 +426,79 @@ input[type='number'] {
     transition: none;
   }
 }
+
+/* Sound audition page */
+.audition h1 {
+  margin: 8px 0 0;
+  font-size: 24px;
+  text-align: center;
+}
+
+.audition__card {
+  padding: 14px;
+}
+
+.audition__card > :not(summary) {
+  margin: 0;
+}
+
+.audition__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.audition__desc {
+  margin: 2px 0 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.audition__buttons {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+  gap: 6px;
+  margin-top: 12px !important;
+}
+
+.audition__buttons .seg__btn {
+  background: var(--surface-2);
+}
+
+.audition__play {
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.star-btn {
+  flex: none;
+  height: 44px;
+  color: var(--muted);
+}
+
+.star-btn[aria-pressed='true'] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.audition__summary {
+  margin: 0;
+  font-weight: 600;
+  text-align: center;
+}
+
+.sound-link {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 14px;
+}
+
+a {
+  color: var(--accent);
+}

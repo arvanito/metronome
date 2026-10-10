@@ -92,4 +92,19 @@ describe('sounds', () => {
       expect(Math.abs(samples[samples.length - 1])).toBeLessThan(0.05);
     }
   });
+
+  it.each(SOUNDS.map((s) => [s.id, s] as const))('%s is not shrill', (_, sound) => {
+    // RMS of the first difference over RMS of the signal grows with frequency: for a
+    // sine of frequency f it is 2·sin(πf/sr). 0.55 at 48 kHz ≈ energy centred below ~4 kHz.
+    for (const kind of ['accent', 'beat', 'sub'] as const) {
+      const x = renderVoice(sound, kind, 48000);
+      let e = 0;
+      let d = 0;
+      for (let i = 1; i < x.length; i++) {
+        e += x[i] ** 2;
+        d += (x[i] - x[i - 1]) ** 2;
+      }
+      expect(Math.sqrt(d / e)).toBeLessThan(0.55);
+    }
+  });
 });

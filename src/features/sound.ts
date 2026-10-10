@@ -1,4 +1,4 @@
-import { SOUNDS } from '../engine/sounds';
+import { SOUNDS, getSound } from '../engine/sounds';
 import { patchSettings } from '../state';
 import { field, h } from '../ui/dom';
 import type { Feature } from './feature';
@@ -19,11 +19,16 @@ export const sound: Feature = {
       step: 0.01,
       oninput: () => patchSettings(store, { volume: Number(volume.value) }),
     });
-    root.append(field('Sound', select), field('Volume', volume));
+    root.append(
+      field('Sound', select),
+      field('Volume', volume),
+      h('p', { class: 'sound-link' }, h('a', { href: './audition.html' }, 'Compare all sounds →')),
+    );
 
     const render = () => {
       const s = store.get().settings;
-      select.value = s.sound;
+      // getSound falls back to the first pack if a saved id no longer exists.
+      select.value = getSound(s.sound).id;
       volume.value = String(s.volume);
     };
     render();
