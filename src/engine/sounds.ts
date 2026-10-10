@@ -160,25 +160,6 @@ export const SOUNDS: SoundDef[] = [
     },
   },
   {
-    id: 'gentlebeep',
-    label: 'Gentle beep',
-    description: 'Like Soft beep, but lower, a pure tone and a slower fade-in.',
-    render(kind, sr) {
-      const f = { accent: 659.25, beat: 523.25, sub: 440 }[kind];
-      return synth(sr, 0.22, (t) => fadeIn(t, 0.008) * mode(t, f, 0.045));
-    },
-  },
-  {
-    id: 'hum',
-    label: 'Hum',
-    description: 'The softest: a low, rounded tone that swells in and out.',
-    render(kind, sr) {
-      const f = { accent: 440, beat: 349.23, sub: 293.66 }[kind];
-      // Add the octave lightly so the low tone still carries on small phone speakers.
-      return synth(sr, 0.3, (t) => fadeIn(t, 0.012) * (mode(t, f, 0.06) + mode(t, 2 * f, 0.03, 0.15)));
-    },
-  },
-  {
     id: 'sidestick',
     label: 'Side stick',
     description: 'Drummer\'s rim click, muted and woody.',
@@ -244,19 +225,6 @@ export const SOUNDS: SoundDef[] = [
         mix([tick(sr, 0.05, f, 2, 0.003), 0.7], [synth(sr, 0.05, (t) => fadeIn(t, 0.0006) * mode(t, f, 0.006)), 0.6]),
         sr,
         4000,
-      );
-    },
-  },
-  {
-    id: 'cowbell',
-    label: 'Cowbell',
-    description: 'Short, muted cowbell. Cuts through a band without the clang.',
-    render(kind, sr) {
-      const [f1, f2] = { accent: [560, 845], beat: [500, 755], sub: [440, 665] }[kind];
-      return lowpass(
-        synth(sr, 0.25, (t) => fadeIn(t, 0.001) * (mode(t, f1, 0.05) + mode(t, f2, 0.045) + mode(t, 2 * f2, 0.02, 0.2))),
-        sr,
-        3000,
       );
     },
   },
