@@ -14,6 +14,7 @@ TypeScript and Vitest.
 - Subdivisions: 8ths, triplets, 16ths
 - Four synthesised sounds (click, beep, wood block, cowbell) and volume
 - Speed trainer: change the tempo by N BPM every M bars, up to a target
+- Tuner: chromatic, via the microphone, with a guitar string guide and adjustable A4 (415–466 Hz)
 - Presets saved on the device
 - Remembers your settings, keeps the screen awake while playing, works offline once installed
 - `Space` starts and stops
@@ -41,8 +42,8 @@ speakers, adjusted for output latency.
 
 ```
 src/
-  core/       Pure logic, no DOM or audio: rhythm, tempo, tap tempo, speed trainer, settings, store
-  engine/     Audio: lookahead scheduler, synthesised sounds, Web Audio glue, timer worker
+  core/       Pure logic, no DOM or audio: rhythm, tempo, tap tempo, speed trainer, pitch detection, settings, store
+  engine/     Audio: lookahead scheduler, synthesised sounds, Web Audio glue, timer worker, tuner input
   features/   One file per feature; the list in features/index.ts decides what appears
   ui/         Small DOM helpers
   state.ts    App state + saving to localStorage

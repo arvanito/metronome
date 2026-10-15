@@ -10,6 +10,7 @@
   --beat-normal: #9a9ca5;
   --focus: #2f6fed;
   --boost: #c8352b;
+  --in-tune: #1f9d55;
   --radius: 14px;
   color-scheme: light dark;
 }
@@ -27,6 +28,7 @@
     --beat-normal: #6c7282;
     --focus: #7aa5ff;
     --boost: #ff5a4f;
+    --in-tune: #3ccf7a;
   }
 }
 
@@ -413,6 +415,134 @@ input[type='number'] {
   cursor: pointer;
 }
 
+/* Tuner */
+.tuner {
+  --cents: 0;
+  --state-color: var(--beat-normal);
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 12px 0 4px;
+}
+
+.tuner[data-state='flat'],
+.tuner[data-state='sharp'] {
+  --state-color: var(--accent);
+}
+
+.tuner[data-state='in-tune'] {
+  --state-color: var(--in-tune);
+}
+
+.tuner__readout {
+  display: flex;
+  align-items: baseline;
+  min-height: 72px;
+  color: var(--state-color);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.tuner__note {
+  font-size: 72px;
+}
+
+.tuner__octave {
+  font-size: 22px;
+  color: var(--muted);
+}
+
+.tuner__meter {
+  width: 100%;
+}
+
+.tuner__scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.tuner__track {
+  position: relative;
+  height: 28px;
+  border-radius: 8px;
+  /* Green band in the middle marks the in-tune zone (±5 of ±50 cents). */
+  background:
+    linear-gradient(var(--border), var(--border)) center / 2px 100% no-repeat,
+    linear-gradient(color-mix(in srgb, var(--in-tune) 22%, transparent), color-mix(in srgb, var(--in-tune) 22%, transparent))
+      center / 10% 100% no-repeat,
+    var(--surface-2);
+}
+
+.tuner__needle {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  /* ±50 cents spans the whole track. */
+  left: calc(50% + var(--cents) * 1%);
+  width: 4px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: var(--state-color);
+  transition: left 60ms linear;
+}
+
+.tuner[data-state='idle'] .tuner__needle,
+.tuner[data-state='listening'] .tuner__needle {
+  opacity: 0;
+}
+
+.tuner__detail {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.tuner__strings {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  width: 100%;
+}
+
+.tuner__string {
+  padding: 6px 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.tuner__string.is-target {
+  border-color: var(--state-color);
+  color: var(--state-color);
+}
+
+.tuner__controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: end;
+  gap: 12px;
+}
+
+.tuner__toggle {
+  min-height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tuner__toggle[aria-pressed='true'] {
+  background: var(--text);
+  color: var(--bg);
+}
+
 @media (max-width: 380px) {
   .grid3 {
     grid-template-columns: 1fr;
@@ -423,7 +553,8 @@ input[type='number'] {
   .beat,
   .beat.is-active,
   .beat.is-sub,
-  .tap-btn.is-tapped {
+  .tap-btn.is-tapped,
+  .tuner__needle {
     animation: none;
     transition: none;
   }
