@@ -14,7 +14,7 @@ TypeScript and Vitest.
 - Subdivisions: 8ths, triplets, 16ths
 - Four synthesised sounds (click, beep, wood block, cowbell) and volume
 - Speed trainer: change the tempo by N BPM every M bars, up to a target
-- Tuner: chromatic, via the microphone, with a guitar string guide and adjustable A4 (415–466 Hz)
+- Tuner: chromatic, from a microphone or an audio interface input (choose input 1, 2 or both), with a guitar string guide and adjustable A4 (415–466 Hz)
 - Presets saved on the device
 - Remembers your settings, keeps the screen awake while playing, works offline once installed
 - `Space` starts and stops
