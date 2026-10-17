@@ -31,12 +31,15 @@ export type TunerEvents = {
   pitch: number | null;
 };
 
-/** The audio inputs, e.g. a microphone or an audio interface. Labels are empty until access is granted once. */
+/**
+ * The audio inputs, e.g. a microphone or an audio interface. Until access has been granted
+ * once, browsers hide the inputs' names (labels are empty).
+ */
 export async function listInputs(): Promise<InputDevice[]> {
   const devices = await navigator.mediaDevices.enumerateDevices();
   return devices
     .filter((d) => d.kind === 'audioinput' && d.deviceId !== 'default' && d.deviceId !== 'communications')
-    .map((d, i) => ({ deviceId: d.deviceId, label: d.label || `Audio input ${i + 1}` }));
+    .map((d) => ({ deviceId: d.deviceId, label: d.label }));
 }
 
 /** Listens to an audio input and reports the pitch it hears. Independent of the metronome's audio. */

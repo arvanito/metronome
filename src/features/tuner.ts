@@ -23,6 +23,8 @@ interface TunerPrefs {
   /** Empty for the system default input. */
   deviceId: string;
   channel: InputChannel;
+  /** Name of the chosen input, shown before the browser reveals device names. */
+  label: string;
 }
 
 /** One entry in the input list: a device, and which of its channels to listen to. */
@@ -33,12 +35,13 @@ interface InputChoice {
 }
 
 function loadPrefs(): TunerPrefs {
-  const prefs: TunerPrefs = { a4: DEFAULT_A4, deviceId: '', channel: 'mix' };
+  const prefs: TunerPrefs = { a4: DEFAULT_A4, deviceId: '', channel: 'mix', label: '' };
   try {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null') ?? {};
     if (typeof raw.a4 === 'number' && raw.a4 >= MIN_A4 && raw.a4 <= MAX_A4) prefs.a4 = raw.a4;
     if (typeof raw.deviceId === 'string') prefs.deviceId = raw.deviceId;
     if (CHANNELS.includes(raw.channel)) prefs.channel = raw.channel;
+    if (typeof raw.label === 'string') prefs.label = raw.label;
   } catch {
     // Storage blocked or corrupt: use the defaults.
   }
@@ -86,6 +89,7 @@ export const tuner: Feature = {
         const choice = choices[input.selectedIndex];
         prefs.deviceId = choice.deviceId;
         prefs.channel = choice.channel;
+        prefs.label = choice.label;
         savePrefs(prefs);
         if (engine.running) void start();
       },
@@ -128,6 +132,7 @@ export const tuner: Feature = {
       const devices = await listInputs().catch(() => []);
       choices = [{ deviceId: '', channel: 'mix', label: 'Default input' }];
       for (const { deviceId, label } of devices) {
+        if (!label) continue; // Nameless until access is granted; see the note below.
         const { device, pair } = describeInput(label);
         if (!pair) {
           // A guitar on either channel is heard: 'mix' sums them.
@@ -144,11 +149,15 @@ export const tuner: Feature = {
       const matches = (c: InputChoice) => c.deviceId === prefs.deviceId && c.channel === prefs.channel;
       if (!choices.some(matches)) {
         const sameDevice = choices.find((c) => c.deviceId === prefs.deviceId);
-        if (sameDevice) prefs.channel = sameDevice.channel;
+        if (sameDevice) ({ channel: prefs.channel, label: prefs.label } = sameDevice);
         // Saved but not listed (yet): keep it rather than silently switching.
-        else choices.push({ deviceId: prefs.deviceId, channel: prefs.channel, label: 'Last used input' });
+        else choices.push({ deviceId: prefs.deviceId, channel: prefs.channel, label: prefs.label || 'Last used input' });
       }
-      input.replaceChildren(...choices.map((c) => h('option', {}, c.label)));
+      const options = choices.map((c) => h('option', {}, c.label));
+      if (devices.some((d) => !d.label)) {
+        options.push(h('option', { disabled: true }, 'Other inputs (e.g. an audio interface) appear after Start listening'));
+      }
+      input.replaceChildren(...options);
       input.selectedIndex = choices.findIndex(matches);
     };
 
@@ -187,6 +196,7 @@ export const tuner: Feature = {
         if (!prefs.deviceId || !missing) throw err;
         prefs.deviceId = '';
         prefs.channel = 'mix';
+        prefs.label = '';
         savePrefs(prefs);
         status.textContent = 'The chosen input is not connected, so the default input is used.';
         await engine.start({ channel: prefs.channel });
